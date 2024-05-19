@@ -14,6 +14,7 @@ import argparse
 import json
 import jsonschema
 import os.path
+import sys
 
 
 def add_flight(flights, destination, number, type):
@@ -67,8 +68,8 @@ def list_flights(flights):
                 '| {:>4} | {:<30} | {:<20} | {:>20} |'.format(
                     idx,
                     flight.get('destination', ''),
-                    flight.get('flight number', ''),
-                    flight.get('type of plane', 0)
+                    flight.get('flight_number', ''),
+                    flight.get('plane_type', '')
                 )
             )
     else:
@@ -84,7 +85,7 @@ def find_flights(flights, type):
     found = []
 
     for flight in flights:
-        if flight['type of plane'] == type:
+        if flight['plane_type'] == type:
             found.append(flight)
 
     if not found:
@@ -114,10 +115,10 @@ def load_flights(file_name):
             "type": "object",
             "properties": {
                 "destination": {"type": "string"},
-                "flight number": {"type": "string"},
-                "type of plane": {"type": "string"}
+                "flight_number": {"type": "string"},
+                "plane_type": {"type": "string"}
             },
-            "required": ["destination", "flight number", "type of plane"]
+            "required": ["destination", "flight_number", "plane_type"]
         }
     }
     # Открыть файл с заданным именем для чтения.
@@ -138,8 +139,10 @@ def main(command_line=None):
     # Создать родительский парсер для определения имени файла.
     file_parser = argparse.ArgumentParser(add_help=False)
     file_parser.add_argument(
-        "filename",
+        "-d",
+        "--data",
         action="store",
+        required=False,
         help="The data file name"
     )
     # Создать основной парсер командной строки.
@@ -157,9 +160,9 @@ def main(command_line=None):
         help="Add a new flight"
     )
     add.add_argument(
-        "-d",
         "--destination",
         action="store",
+        required=True,
         help="The departure point"
     )
     add.add_argument(
@@ -189,8 +192,8 @@ def main(command_line=None):
     )
 
     find.add_argument(
-        "-f",
-        "--find",
+        "-s",
+        "--select",
         action="store",
         type=str,
         required=True,
@@ -200,10 +203,17 @@ def main(command_line=None):
     args = parser.parse_args(command_line)
 
     # Загрузить все рейсы из файла, если файл существует.
-    is_dirty = False
+    data_file = args.data
+    if not data_file:
+        data_file = os.environ.get("FLY_DATA")
+    if not data_file:
+        print("The data file name is absent", file=sys.stderr)
+        sys.exit(1)
 
-    if os.path.exists(args.filename):
-        flights = load_flights(args.filename)
+    # Загрузить все рейсы из файла, если файл существует.
+    is_dirty = False
+    if os.path.exists(data_file):
+        flights = load_flights(data_file)
     else:
         flights = []
 
@@ -223,11 +233,11 @@ def main(command_line=None):
 
     # Выбрать требуемых рааботников.
     elif args.command == "find":
-        find_flights(flights, args.find)
+        find_flights(flights, args.select)
 
     # Сохранить данные в файл, если список работников был изменен.
     if is_dirty:
-        save_flights(args.filename, flights)
+        save_flights(data_file, flights)
 
 
 if __name__ == '__main__':
