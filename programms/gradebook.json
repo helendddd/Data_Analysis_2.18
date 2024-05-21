@@ -1,0 +1,46 @@
+[
+    {
+        "name": "Михеева Е.",
+        "group_number": "ИВТ-б-о-22-1",
+        "performance": [
+            5,
+            4,
+            3,
+            4,
+            5
+        ]
+    },
+    {
+        "name": "На Д.В.",
+        "group_number": "341",
+        "performance": [
+            4,
+            3,
+            2,
+            5,
+            4
+        ]
+    },
+    {
+        "name": "Шатова Е.К.",
+        "group_number": "342",
+        "performance": [
+            2,
+            3,
+            5,
+            5,
+            2
+        ]
+    },
+    {
+        "name": "Михеев К.А.",
+        "group_number": "8",
+        "performance": [
+            5,
+            2,
+            3,
+            4,
+            5
+        ]
+    }
+]

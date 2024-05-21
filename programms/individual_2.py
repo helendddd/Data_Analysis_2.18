@@ -1,53 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Использовать словарь, содержащий следующие ключи:
-# название пункта назначения рейса; номер рейса; тип самолета.
-# Написать программу, выполняющую следующие действия: ввод с клавиатуры
-# данных в список, состоящий из словарей заданной структуры;
-# записи должны быть размещены в алфавитном порядке по названиям
-# пунктов назначения; вывод на экран пунктов назначения и номеров рейсов,
-# обслуживаемых самолетом, тип которого введен с клавиатуры;
-# если таких рейсов нет, выдать на дисплей соответствующее сообщение.
-#
-# Необходимо, чтобы значения переменных окружения считывались из файла .env .
+# Самостоятельно изучите работу с пакетом python-dotenv.
+# Модифицируйте программу задания 1 таким образом, чтобы значения
+# необходимых переменных окружения считывались из файла .env.
 
 import argparse
 import json
 import os
 import sys
 
-import jsonschema
 from dotenv import load_dotenv
 
 
-def add_flight(flights, destination, number, plane_type):
+def add_student(students, name, group_number, performance):
     """
-    Функция для добавления нового рейса в список.
-    Запрашивает у пользователя название пункта назначения,
-    номер рейса и тип самолета,
-    создает новый рейс и добавляет его в общий список рейсов,
-    сортируя по названию пункта назначения.
+    Функция для добавления нового ученика в список.
+    Запрашивает у пользователя Фамилию и инициалы студента,
+    номер группы и успеваемость,
+    создает новую запись и добавляет ее в общий список студентов,
+    сортируя по фамилии.
     """
-    flights.append(
+    students.append(
         {
-            "destination": destination,
-            "flight_number": number,
-            "plane_type": plane_type,
+            "name": name,
+            "group_number": group_number,
+            "performance": performance,
         }
     )
-    flights.sort(key=lambda flight: flight["destination"])
-    return flights
+    return students
 
 
-def list_flights(flights):
+def list_students(students):
     """
-    Функция для вывода списка рейсов на экран.
-    Выводит табличное представление списка рейсов,
-    включая номер, название пункта назначения,
-    номер рейса и тип самолета.
+    Функция для вывода списка студентов.
+    Выводит табличное представление списка,
+    включая номер, фамилию,
+    номер группы и успеваемость.
     """
-    if flights:
+    if students:
         line = "+-{}-+-{}-+-{}-+-{}-+".format(
             "-" * 4, "-" * 30, "-" * 20, "-" * 20
         )
@@ -55,81 +46,60 @@ def list_flights(flights):
 
         print(
             "| {:^4} | {:^30} | {:^20} | {:^20} |".format(
-                "No", "Пункт назначения", "Номер рейса", "Тип самолета"
+                "No", "Фамилия и инициалы", "Номер группы", "Успеваемость"
             )
         )
 
         print(line)
 
-        for idx, flight in enumerate(flights, 1):
+        for idx, student in enumerate(students, 1):
             print(
-                "| {:>4} | {:<30} | {:<20} | {:<20} |".format(
+                "| {:>4} | {:<30} | {:<20} | {:>20} |".format(
                     idx,
-                    flight.get("destination", ""),
-                    flight.get("flight_number", ""),
-                    flight.get("plane_type", ""),
+                    student.get("name", ""),
+                    student.get("group_number", ""),
+                    ", ".join(map(str, student.get("performance", []))),
                 )
             )
-            print(line)
+        print(line)
     else:
-        print("Список рейсов пуст.")
+        print("Список студентов пуст.")
 
 
-def find_flights(flights, plane_type):
+def find(students):
     """
-    Функция для поиска рейсов по типу самолета и вывода результатов на экран.
-    Запрашивает у пользователя тип самолета,
-    затем ищет все рейсы с этим типом и выводит их табличное представление.
+    Функция для поиска студентов с отметкой 2.
     """
     found = []
-    for flight in flights:
-        if flight["plane_type"] == type:
-            found.append(flight)
+
+    for student in students:
+        if 2 in student["performance"]:
+            found.append(student)
 
     if not found:
-        print(f"Рейсов на самолете типа '{plane_type}' не найдено.")
+        print("Студентов с отметкой 2 не найдено")
     else:
-        list_flights(found)
+        list_students(found)
+    return found
 
 
-def save_flights(file_name, flights):
+def save_students(file_name, students):
     """
-    Сохранить всех работников в файл JSON.
+    Сохранить всех студентов в файл JSON.
     """
     with open(file_name, "w", encoding="utf-8") as fout:
-        json.dump(flights, fout, ensure_ascii=False, indent=4)
+        json.dump(students, fout, ensure_ascii=False, indent=4)
 
 
-def load_flights(file_name):
+def load_students(file_name):
     """
-    Загрузить всех работников из файла JSON.
+    Загрузить всех студентов из файла JSON.
     """
-    schema = {
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "destination": {"type": "string"},
-                "flight_number": {"type": "string"},
-                "plane_type": {"type": "string"},
-            },
-            "required": ["destination", "flight_number", "plane_type"],
-        },
-    }
     if not os.path.exists(file_name):
         return []
 
     with open(file_name, "r", encoding="utf-8") as fin:
-        try:
-            loaded = json.load(fin)
-        except json.JSONDecodeError:
-            return []
-
-    try:
-        jsonschema.validate(loaded, schema)
-    except jsonschema.exceptions.ValidationError as e:
-        print(">>> Error:")
-        print(e.message)
+        loaded = json.load(fin)
     return loaded
 
 
@@ -137,8 +107,7 @@ def main(command_line=None):
     """
     Главная функция программы.
     """
-    # Загрузить переменные окружения из файла .env
-    load_dotenv()
+    load_dotenv()  # Загрузить переменные окружения из файла .env
 
     file_parser = argparse.ArgumentParser(add_help=False)
     file_parser.add_argument(
@@ -149,75 +118,71 @@ def main(command_line=None):
         help="The data file name",
     )
 
-    parser = argparse.ArgumentParser("flights")
+    parser = argparse.ArgumentParser("students")
     parser.add_argument(
         "--version", action="version", version="%(prog)s 0.1.0"
     )
     subparsers = parser.add_subparsers(dest="command")
 
     add = subparsers.add_parser(
-        "add", parents=[file_parser], help="Add a new flight"
+        "add", parents=[file_parser], help="Add a new student"
     )
     add.add_argument(
-        "--destination",
+        "-n", "--name", action="store", required=True, help="Student's name"
+    )
+    add.add_argument(
+        "-g",
+        "--group_number",
         action="store",
         required=True,
-        help="The destination point",
+        help="Student's group number",
     )
     add.add_argument(
-        "-n",
-        "--number",
-        action="store",
+        "-p",
+        "--performance",
+        nargs="+",
+        type=int,
         required=True,
-        help="The flight number",
-    )
-    add.add_argument(
-        "-t", "--type", action="store", required=True, help="The type of plane"
+        help="Student's performance (list of five marks)",
     )
 
     _ = subparsers.add_parser(
-        "display", parents=[file_parser], help="Display all flights"
+        "display", parents=[file_parser], help="Display all students"
     )
 
-    find = subparsers.add_parser(
-        "find", parents=[file_parser], help="Find the flights"
-    )
-    find.add_argument(
-        "-s",
-        "--select",
-        action="store",
-        type=str,
-        required=True,
-        help="Find flights served by this type of plane",
+    _ = subparsers.add_parser(
+        "find", parents=[file_parser], help="Find the students"
     )
 
     args = parser.parse_args(command_line)
 
     data_file = args.data
     if not data_file:
-        data_file = os.environ.get("FLY_DATA")
+        data_file = os.environ.get("STUDENTS_DATA")
     if not data_file:
         print("The data file name is absent", file=sys.stderr)
         sys.exit(1)
 
     is_dirty = False
     if os.path.exists(data_file):
-        flights = load_flights(data_file)
+        students = load_students(data_file)
     else:
-        flights = []
+        students = []
 
     if args.command == "add":
-        flights = add_flight(flights, args.destination, args.number, args.type)
+        students = add_student(
+            students, args.name, args.group, args.performance
+        )
         is_dirty = True
 
     elif args.command == "display":
-        list_flights(flights)
+        list_students(students)
 
     elif args.command == "find":
-        find_flights(flights, args.select)
+        find(students)
 
     if is_dirty:
-        save_flights(data_file, flights)
+        save_students(data_file, students)
 
 
 if __name__ == "__main__":
